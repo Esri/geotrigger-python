@@ -4,7 +4,7 @@ Tests for the Geotrigger module.
 
 from mock import Mock, patch
 from unittest import TestCase
-from geotrigger import Geotrigger
+from geotrigger import GeotriggerClient, GeotriggerSession
 
 class GeotriggerTestCase(TestCase):
     @patch.object(Session, 'runRequest')
@@ -14,5 +14,4 @@ class GeotriggerTestCase(TestCase):
 
         self.test_device =  Geotrigger(self.client_id)
         self.test_application = Geotrigger(self.client_id, self.client_secret)
-
-            
+s
