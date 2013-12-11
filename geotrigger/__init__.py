@@ -10,7 +10,7 @@ remote server when a mobile device enters or exits an area.
 
 Basic usage:
 
-    >>> from geotrigger import GeotriggerClient
+    >>> from client import GeotriggerClient
     >>> gt = GeotriggerClient(CLIENT_ID, CLIENT_SECRET)
     >>>
     >>> # list device information for the application
@@ -25,7 +25,7 @@ Basic usage:
 :license: Apache 2.0, see LICENSE for details.
 """
 
-from geotrigger import GeotriggerClient
+from client import GeotriggerClient
 from session import GeotriggerDevice, GeotriggerApplication, GeotriggerException
 
 __all__ = [GeotriggerClient, GeotriggerDevice, GeotriggerApplication,

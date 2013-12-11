@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 # Get version number
-from geotrigger.version import VERSION
+from geotrigger import VERSION
 
 readme = open('README.md')
 
