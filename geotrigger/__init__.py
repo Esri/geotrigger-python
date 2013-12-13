@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-geotrigger-client-python
+geotrigger-python
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Geotrigger Client is an API client for the ArcGIS Geotrigger Service, a
@@ -27,6 +27,11 @@ Basic usage:
 
 from client import GeotriggerClient
 from session import GeotriggerDevice, GeotriggerApplication, GeotriggerException
+from version import VERSION
+
+__version__ = VERSION
+
+__author__ = 'Josh Yaganeh <jyaganeh@esri.com>'
 
 __all__ = [GeotriggerClient, GeotriggerDevice, GeotriggerApplication,
            GeotriggerException]

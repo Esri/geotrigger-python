@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import json
+
 import requests
 
 from version import VERSION, DEBUG
@@ -11,12 +13,15 @@ AGO_REGISTER_ROUTE = 'sharing/oauth2/registerDevice'
 STATUS_OK = 200
 STATUS_TOKEN_EXPIRED = 498
 
+
 class GeotriggerException(Exception):
     pass
 
+
 def log(msg):
     if DEBUG:
-        print(msg)
+        print(msg + "\n")
+
 
 class GeotriggerSession(object):
     """
@@ -25,6 +30,7 @@ class GeotriggerSession(object):
     of your application, or as a Device, which can only access a limited set of
     API functionality.
     """
+
     def __init__(self, client_id=None, client_secret=None, access_token=None,
                  refresh_token=None, expires_in=None, device_id=None):
         """
@@ -56,94 +62,93 @@ class GeotriggerSession(object):
         """
         return (self.client_id and self.client_secret)
 
-    def ago_post(self, route, data=None):
+    def ago_request(self, route, data=None):
         """
-        Makes a POST request containing `params` to the specified `route` of
-        ArcGIS Online API.
+        Makes a GET request to the specified `route` of the ArcGIS Online API,
+        sending the given form encoded `data`.
         """
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        url = AGO_BASE_URL + route + "?"
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        url = AGO_BASE_URL + route
 
-        #if data is not None:
-        #    data = "&".join("{}={}".format(k,v) for k,v in data.iteritems())
+        return self.post(url, headers=headers, data=data)
 
-        return self.request(url, headers=headers, data=data)
-
-    def geotrigger_post(self, route, data='{}'):
+    def geotrigger_request(self, route, data='{}'):
         """
-        Makes a POST request containing `params` to the specified `route` of
-        the Geotrigger API
+        Makes a authenticated POST request to the specified `route` of the
+        Geotrigger API, sending the given `data` as json.
         """
+        if isinstance(data, dict):
+            data = json.dumps(data)
 
         url = GEOTRIGGER_BASE_URL + route
         headers = {
             'Content-Type': 'application/json',
             'X-GT-Client-Name': 'geotrigger-python',
             'X-GT-Client-Version': VERSION,
+            'Authorization': 'Bearer ' + self.access_token
         }
-        return self.request(url, headers=headers, data=data)
+        return self.post(url, headers=headers, data=data)
 
-    def request(self, url, headers={}, data='{}', attempts=0):
+    def post(self, url, data='{}', headers={}):
         """
         Makes a POST request to the given `url` and returns the raw response.
         """
-        #if data and isinstance(data, dict):
-        #    data = json.dumps(data)
-
-        if self.access_token:
-            headers.update({
-                'Authorization': 'Bearer {}'.format(self.access_token)
-            })
-
+        # Log if in debug mode
         log("POST {}".format(url))
-        print("\theaders: {}".format(
+        log("\tHeaders: {}".format(
             ["{}: {}".format(k, v) for k, v in headers.iteritems()]))
-        print("\tdata: {}".format(data))
+        log("\tData: {}".format(data))
 
-        r = requests.post(url, data=data, headers=headers)
+        res = requests.post(url, data=data, headers=headers)
 
-        # Check for HTTP level errors
-        if r.status_code is not STATUS_OK:
+        # Check for HTTP errors
+        if res.status_code is not STATUS_OK:
             raise GeotriggerException(
-                "Request failed. {}: {}".format(r.status_code, r.text))
+                "Request failed. {}: {}".format(res.status_code, res.text))
 
         # Check for application level errors
-        resp = r.json()
-        if ('error' in resp):
-            status_code = resp['error']['code']
-            # If token is expired, attempt to refresh it
-            if (status_code == STATUS_TOKEN_EXPIRED):
-                log("Token expired!")
-                self.refresh()
-                if attempts < 3:
-                    # Retry request with new access_token
-                    return self.request(url, headers=headers, data=data,
-                                            attempts=attempts + 1)
-                else:
-                    raise GeotriggerException("Could not complete request. "
-                                              "Token is expired and cannot be "
-                                              "refreshed.")
+        r = res.json()
+        log("\tResponse: {}".format(r))
+        if ('error' in r):
+            if ('code' in r['error']):
+                status_code = r['error']['code']
+                # If token is expired, attempt to refresh it, then retry the request
+                if (status_code == STATUS_TOKEN_EXPIRED):
+                    log("Token expired!")
+                    self.refresh()
+                    if 'Authorization' in headers:
+                        headers['Authorization'] = 'Bearer ' + self.access_token
+                    return self.post(url, data=data, headers=headers)
+            elif ('message' in r['error']):
+                raise GeotriggerException(r['error']['message'])
             else:
-                raise GeotriggerException("Error making request. " + r.text)
+                raise GeotriggerException("Error making request. " + res.text)
         else:
-            return resp
+            return r
 
 
 class GeotriggerApplication(GeotriggerSession):
+    """
+    An application session requires both a `client_id` and `client_secret` to be
+    given. This will allow you to manage and administer all aspects of your
+    application.
+    """
+
     def __init__(self, client_id, client_secret, access_token=None,
                  expires_in=None):
         """
         Initializes a new Application Session which will allow you to manage and
         administer all aspects of your application.
         """
-        # Sanity check
         if not client_secret:
             raise ValueError('client_secret cannot be empty.')
 
-        super(self.__class__, self).__init__(client_id=client_id,
-                                   client_secret=client_secret,
-                                   access_token=access_token,
-                                   expires_in=expires_in)
+        super(self.__class__, self).__init__(
+            client_id=client_id,
+            client_secret=client_secret,
+            access_token=access_token,
+            expires_in=expires_in
+        )
 
         if not access_token:
             self.refresh()
@@ -160,30 +165,42 @@ class GeotriggerApplication(GeotriggerSession):
             'f': 'json'
         }
 
-        data = self.ago_post(AGO_TOKEN_ROUTE, params)
-        log(data)
-        return data
+        return self.ago_request(AGO_TOKEN_ROUTE, params)
 
     def refresh(self):
         """
         Refreshes an expired `access_token` for this application.
         """
-        log("Refreshing application token.")
-        app = self.request_token()
-        self.access_token = app['access_token']
-        self.expires_in = app['expires_in']
+        if self.access_token:
+            log("Refreshing application token.")
+        else:
+            log("Requesting application token.")
+
+        r = self.request_token()
+        self.access_token = r['access_token']
+        self.expires_in = r['expires_in']
+
 
 class GeotriggerDevice(GeotriggerSession):
+    """
+    A device session requires only a `client_id` to be given. This will only
+    allow access to a limited subset of API functionality, but can be useful for
+    impersonating a device.
+    """
+
     def __init__(self, client_id, device_id=None, access_token=None,
                  refresh_token=None, expires_in=None):
         """
         Initializes a new Device Session which only allows access to a limited
         subset of API functionality.
         """
-        self.session = super(self.__class__, self).__init__(client_id, device_id=device_id,
-                                   access_token=access_token,
-                                   refresh_token=refresh_token,
-                                   expires_in=expires_in)
+        self.session = super(self.__class__, self).__init__(
+            client_id,
+            device_id=device_id,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=expires_in
+        )
 
         if not (device_id and access_token and refresh_token):
             device = self.register()
@@ -203,13 +220,12 @@ class GeotriggerDevice(GeotriggerSession):
             'f': 'json'
         }
 
-        data = self.ago_post(AGO_REGISTER_ROUTE, params)
-        log(data)
+        r = self.ago_request(AGO_REGISTER_ROUTE, params)
         return {
-            'device_id': data['device']['deviceId'],
-            'access_token': data['deviceToken']['access_token'],
-            'refresh_token': data['deviceToken']['refresh_token'],
-            'expires_in': data['deviceToken']['expires_in']
+            'device_id': r['device']['deviceId'],
+            'access_token': r['deviceToken']['access_token'],
+            'refresh_token': r['deviceToken']['refresh_token'],
+            'expires_in': r['deviceToken']['expires_in']
         }
 
     def refresh(self):
@@ -220,9 +236,10 @@ class GeotriggerDevice(GeotriggerSession):
         params = {
             'client_id': self.client_id,
             'grant_type': 'refresh_token',
-            'refresh_token': self.refresh_token
+            'refresh_token': self.refresh_token,
+            'f': 'json'
         }
 
-        data = self.ago_post(AGO_TOKEN_ROUTE, params)
-        self.access_token = data['access_token']
-        self.expires_in = data['expires_in']
+        r = self.ago_request(AGO_TOKEN_ROUTE, params)
+        self.access_token = r['access_token']
+        self.expires_in = r['expires_in']

@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from session import GeotriggerApplication, GeotriggerDevice
+
 
 class GeotriggerClient:
     """
     A simple interface to the Geotrigger API.
     """
+
     def __init__(self, client_id=None, client_secret=None, session=None):
         """
         Initializes a new instance of the Geotrigger API client.
@@ -43,4 +47,4 @@ class GeotriggerClient:
         Makes a Geotrigger API request to the given `route`.
         The optional `data` parameter can be either a dict or a json string.
         """
-        return self.session.geotrigger_post(route, data=data)
+        return self.session.geotrigger_request(route, data=data)

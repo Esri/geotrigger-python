@@ -16,7 +16,7 @@ setup(
     author='Josh Yaganeh',
     author_email='jyaganeh@esri.com',
     url='https://github.com/esri/geotrigger-python',
-    packages=['geotrigger',],
+    packages=['geotrigger', ],
     classifiers=[
         'Development Status :: 4 - Beta', # 4 Beta, 5 Production/Stable
         'Environment :: Console',
@@ -25,5 +25,5 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-    ]
+    ], requires=['mock']
 )
