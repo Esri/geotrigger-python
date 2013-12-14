@@ -49,8 +49,7 @@ class GeotriggerClientTestCase(TestCase):
         gt = GeotriggerClient(session=GeotriggerDevice(self.client_id,
                                                        self.device_id,
                                                        self.access_token,
-                                                       self.refresh_token,
-                                                       self.expires_in))
+                                                       self.refresh_token))
         self.assertIsNotNone(gt.session)
         self.assertTrue(gt.session.is_device())
         self.assertEqual(gt.session.client_id, self.client_id)
@@ -77,8 +76,7 @@ class GeotriggerClientTestCase(TestCase):
     def test_application_init_manual(self, mock_request_token):
         gt = GeotriggerClient(session=GeotriggerApplication(self.client_id,
                                                             self.client_secret,
-                                                            self.access_token,
-                                                            self.expires_in))
+                                                            self.access_token))
         self.assertIsNotNone(gt.session)
         self.assertTrue(gt.session.is_application())
         self.assertEqual(gt.session.client_id, self.client_id)
