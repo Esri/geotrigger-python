@@ -24,7 +24,7 @@ Features
 -  Also supports making requests as a device, which can be useful for
    testing purposes
 
-Dependancies
+Dependencies
 ------------
 
 -  Requests (>= 2.1.0)
@@ -52,12 +52,11 @@ Examples
 Using the GeotriggerClient as an application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method of using the ``GeotriggerClient`` is best for server-side
-applications, or any client-side application where you don't mind giving
-total access to your application to the user.
+This method of using the `GeotriggerClient` is for server-side apps, acting as
+the sole owner of your ArcGIS application.
 
 Before continuing, you'll need to find the ``client_id`` and
-``client_secret`` for your application on the `ArcGIS for
+``client_secret`` for your ArcGIS application on the `ArcGIS for
 Developers <https://developers.arcgis.com/en/applications/>`__ site.
 You'll find them in the *API Access* section of your applications
 details.
@@ -106,7 +105,8 @@ Using the GeotriggerClient as a Device
 
 The ``GeotriggerClient`` can also be used as if it were a device, which
 will allow you to send location updates and fire triggers, but you will
-not be able to receive any Geotrigger notifications. You can use the
+not be able to receive any Geotrigger notifications, because they are sent as
+push messages to actual mobile devices. You can use the
 `trigger/history <https://developers.arcgis.com/en/geotrigger-service/api-reference/trigger-history/>`__
 API route or configure your triggers with a ``callbackUrl`` in order to
 observe that triggers are being fired.
@@ -184,8 +184,8 @@ Advanced GeotriggerClient usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you already have an ArcGIS Application ``access_token`` that you'd
-like to use to create a ``GeotriggerClient``, passing a
-``GeotriggerApplication`` as the ``session``. You may want to do this if
+like to use to create a ``GeotriggerClient``, pass in a
+``GeotriggerApplication`` as the ``session`` kwarg. You may want to do this if
 you are integrating Geotrigger functionality into an application that
 already obtains credentials from ArcGIS Online.
 
