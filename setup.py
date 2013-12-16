@@ -6,7 +6,7 @@ except ImportError:
 # Get version number
 from geotrigger import VERSION
 
-readme = open('README.md')
+readme = open('README.rst')
 
 setup(
     name='geotrigger',
