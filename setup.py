@@ -26,5 +26,5 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
-    requires=['requests', 'mock']
+    requires=['requests']
 )
