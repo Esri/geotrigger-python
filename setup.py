@@ -9,7 +9,7 @@ from geotrigger import VERSION
 readme = open('README.rst')
 
 setup(
-    name='geotrigger',
+    name='geotrigger-python',
     version=VERSION,
     description='A simple client library for interacting with the ArcGIS Geotrigger API.',
     long_description=readme.read(),
