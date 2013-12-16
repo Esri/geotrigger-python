@@ -41,7 +41,7 @@ command:
 
 .. code:: bash
 
-    pip install geotrigger
+    pip install geotrigger-python
 
 It's also possible to install from a clone of this repository by running
 ``setup.py install`` or ``setup.py develop``.
