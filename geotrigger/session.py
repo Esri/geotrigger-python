@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
+from datetime import datetime, timedelta
+
 import requests
 
 from version import VERSION, DEBUG
+
 
 GEOTRIGGER_BASE_URL = 'https://geotrigger.arcgis.com/'
 AGO_BASE_URL = 'https://www.arcgis.com/'
@@ -11,6 +14,8 @@ AGO_REGISTER_ROUTE = 'sharing/oauth2/registerDevice'
 
 STATUS_OK = 200
 STATUS_TOKEN_EXPIRED = 498
+
+EXPIRES_IN_PADDING = 30
 
 
 class GeotriggerException(Exception):
@@ -46,8 +51,18 @@ class GeotriggerSession(object):
         # Initialize values
         self.access_token = access_token
         self.refresh_token = refresh_token
-        self.expires_in = expires_in
+        self.set_expires(expires_in)
         self.device_id = device_id
+
+    def set_expires(self, expires_in):
+        if expires_in is None:
+            expires_at = None
+        else:
+            delta = timedelta(seconds=int(expires_in) - EXPIRES_IN_PADDING)
+            expires_at = datetime.now() + delta
+
+        self.expires_in = expires_in
+        self.expires_at = expires_at
 
     def is_device(self):
         """
@@ -78,6 +93,10 @@ class GeotriggerSession(object):
         """
         if isinstance(data, dict):
             data = json.dumps(data)
+
+        # Refresh token if necessary
+        if datetime.now() > self.expires_at:
+            self.refresh()
 
         url = GEOTRIGGER_BASE_URL + route
         headers = {
@@ -124,6 +143,10 @@ class GeotriggerSession(object):
                 raise GeotriggerException("Error making request. " + res.text)
         else:
             return r
+
+    def refresh(self):
+        raise NotImplementedError(
+            "Implemented in GeotriggerApplication and GeotriggerDevice.")
 
 
 class GeotriggerApplication(GeotriggerSession):
@@ -177,7 +200,7 @@ class GeotriggerApplication(GeotriggerSession):
 
         r = self.request_token()
         self.access_token = r['access_token']
-        self.expires_in = r['expires_in']
+        self.set_expires(r['expires_in'])
 
 
 class GeotriggerDevice(GeotriggerSession):
@@ -206,7 +229,7 @@ class GeotriggerDevice(GeotriggerSession):
             self.device_id = device['device_id']
             self.access_token = device['access_token']
             self.refresh_token = device['refresh_token']
-            self.expires_in = device['expires_in']
+            self.set_expires(device['expires_in'])
 
     def register(self):
         """
@@ -241,4 +264,4 @@ class GeotriggerDevice(GeotriggerSession):
 
         r = self.ago_request(AGO_TOKEN_ROUTE, params)
         self.access_token = r['access_token']
-        self.expires_in = r['expires_in']
+        self.set_expires(r['expires_in'])
